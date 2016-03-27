@@ -9,10 +9,18 @@ line 2: start point
 page size: 10000 char
 
 How to use it:
-1. Input file path in 1st line.
-2. Input start point in 2nd line.
-3. Input search keyword in 3rd line.
-3. Hot key cmd+alt+T to run plugin.
+1. fill parameters:
+{'needContinue': True,
+'path': '/Users/wingman/GitHub/big_text_reader/xml/small.XML',
+'searchKey': '',
+'searchFrom': 0,
+'appendingEnd': None,
+'start': 0,
+'pageSize': 10000,
+'appendingBegin': None}
+
+2. Cmd+Alt+T
+
 
 Keyword will be searched in text, and renew start point to 1st found point.
 One page of text from start point of the file will show in SublimeText editer view.
