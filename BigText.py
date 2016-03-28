@@ -5,14 +5,13 @@ SHOW_AHEAD_SIZE = 100
 class TextCommand(sublime_plugin.TextCommand):
     parameterBegin = None
     parameterEnd = None
+    showBegin = None
+    showEnd = None
+
     def run(self, edit):
         parameters = self.getParameters()
-        filePath = parameters['path']
-        needContinue = parameters['needContinue']
-        appendingBegin = parameters['appendingBegin']
-        appendingEnd = parameters['appendingEnd']
 
-        text = self.loadTextFromFile(filePath)
+        text = self.loadTextFromFile(parameters['path'])
 
         if parameters['needContinue']:
             start = self.getStartPointWithContinue(parameters, text)
@@ -27,7 +26,7 @@ class TextCommand(sublime_plugin.TextCommand):
         if parameters['searchKey']:
             self.updateSearchOutput(edit, parameters, text[start:end])
         else:
-            self.appendText(edit, text[start:end])
+            self.updateOutput(edit, parameters, text[start:end])
 
     def getStartPoint(self, parameters, text):
         if parameters['searchKey']:
@@ -51,15 +50,18 @@ class TextCommand(sublime_plugin.TextCommand):
         return start
 
 
-
     def getParameters(self):
         parametersBeginRegion = self.view.find(r'\{', 0)
-        parametersEndRegion = self.view.find(r'\}', 0)
+        parametersEndRegion = self.view.find(r'\}', parametersBeginRegion.a)
+        parametersRegion = sublime.Region(parametersBeginRegion.a, parametersEndRegion.b)
+        parametersStr = self.view.substr(parametersRegion)
+
         self.parameterBegin = parametersBeginRegion.a
         self.parameterEnd = parametersEndRegion.b
-        parametersRegion = sublime.Region(self.parameterBegin, self.parameterEnd)
-        parametersStr = self.view.substr(parametersRegion)
+        self.showBegin = min(self.parameterEnd + 2, self.view.size())
+        self.showEnd = self.view.size()
         return eval(parametersStr)
+
 
     def getStartPointSeveralLinesAhead(self, text, start, keyMatchPoint):
         if keyMatchPoint <= 0:
@@ -71,50 +73,42 @@ class TextCommand(sublime_plugin.TextCommand):
         if i > 0:
             return i
 
+
     def updateSearchOutput(self, edit, parameters, text):
         outputRegion = sublime.Region(len(str(parameters)) + 2, self.view.size())
         self.view.replace(edit, outputRegion, text)
 
+
+    def updateOutput(self, edit, parameters, text):
+        if parameters['needContinue']:
+            self.appendText(edit, text)
+        else:
+            showRegion = sublime.Region(self.showBegin, self.showEnd)
+            self.view.replace(edit, showRegion, text)
+
+
     def updateParameters(self, edit, parameters, start, end):
         parameters['appendingBegin'] = start
         parameters['appendingEnd'] = end
+        text = self.formartDictStr(str(parameters))
+        print(str(parameters))
+        print(text)
         self.view.replace(edit,
                           sublime.Region(self.parameterBegin, self.parameterEnd),
-                          str(parameters) + '\n\n')
+                          text)
 
-    '''
-    def dictStr(self, parameters):
-        ' ''
-        {
-        'path': '/Users/wingman/GitHub/big_text_reader/xml/example_400M.XML',
-        'pageSize': 1000,
-        'start': 0,
-        'needContinue': True,
-        'appendingBegin': None,
-        'appendingEnd': None,
-        'searchKey': None,
-        'searchFrom': None,
-        }
-        ' ''
-        items = ['{', '\n',
-                'path: ', parameters['path'], ',\n',
-                'pageSize: ', str(parameters['pageSize']), ',\n',
-                'start: ', str(parameters['start']), ',\n',
-                'needContinue: ', str(parameters['needContinue']), ',\n',
-                'appendingBegin: ', str(parameters['appendingBegin']), ',\n',
-                'appendingEnd: ', str(parameters['appendingEnd']), ',\n',
-                'searchKey: ', str(parameters['searchKey']), ',\n',
-                'searchFrom: ', str(parameters['searchFrom']), ',\n',
-                '}',
-                ]
-        return ''.join(items)
-    '''
+
+    def formartDictStr(self, dictStr):
+        return dictStr.replace(',', ',\n').replace('{', '{\n').replace('}', '\n}')
+
 
     def insertText(self, edit, position, text):
         self.view.insert(edit, position, text)
 
+
     def appendText(self, edit, text):
         self.view.insert(edit, self.view.size(), text)
+
 
     def loadTextFromFile(self, filePath):
         with open(filePath, 'r') as f:
@@ -124,12 +118,14 @@ class TextCommand(sublime_plugin.TextCommand):
 
 
 '''
-{'needContinue': True,
-'path': '/Users/wingman/GitHub/big_text_reader/xml/small.XML',
-'searchKey': '',
-'searchFrom': 0,
-'appendingEnd': None,
-'start': 0,
-'pageSize': 10000,
-'appendingBegin': None}
+{
+'searchFrom': None,
+ 'start': 0,
+ 'searchKey': '',
+ 'path': '/Users/wingman/GitHub/big_text_reader/xml/small.xml',
+ 'needContinue': True,
+ 'appendingBegin': None,
+ 'appendingEnd': None,
+ 'pageSize': 300
+}
 '''
