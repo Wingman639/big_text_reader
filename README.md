@@ -14,10 +14,10 @@ How to use it:
 'path': '/Users/wingman/GitHub/big_text_reader/xml/small.XML',
 'searchKey': '',
 'searchFrom': 0,
-'appendingEnd': None,
+'updateEnd': None,
 'start': 0,
 'pageSize': 10000,
-'appendingBegin': None}
+'updateBegin': None}
 
 2. Cmd+Alt+T
 

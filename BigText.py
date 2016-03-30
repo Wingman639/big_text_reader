@@ -20,8 +20,7 @@ class TextCommand(sublime_plugin.TextCommand):
         end = min(len(text), start + parameters['pageSize'])
 
         #self.view.replace(edit, startRegion, str(start))
-        if parameters['needContinue']:
-            self.updateParameters(edit, parameters, start, end)
+        self.updateParameters(edit, parameters, start, end)
 
         if parameters['searchKey']:
             self.updateSearchOutput(edit, parameters, text[start:end])
@@ -37,8 +36,8 @@ class TextCommand(sublime_plugin.TextCommand):
         if parameters['searchKey']:
             return self.getStartWithSearch(parameters, text)
         else:
-            if parameters['appendingEnd']:
-                return parameters['appendingEnd']
+            if parameters['updateEnd']:
+                return parameters['updateEnd']
         return parameters['start']
 
 
@@ -58,10 +57,13 @@ class TextCommand(sublime_plugin.TextCommand):
 
         self.parameterBegin = parametersBeginRegion.a
         self.parameterEnd = parametersEndRegion.b
-        self.showBegin = min(self.parameterEnd + 2, self.view.size())
-        self.showEnd = self.view.size()
         return eval(parametersStr)
 
+    def getShowRegion(self):
+        startRegion = self.view.find(r'==========', 0)
+        showBegin = min(startRegion.b + 1, self.view.size())
+        showEnd = self.view.size()
+        return sublime.Region(showBegin, showEnd)
 
     def getStartPointSeveralLinesAhead(self, text, start, keyMatchPoint):
         if keyMatchPoint <= 0:
@@ -75,21 +77,21 @@ class TextCommand(sublime_plugin.TextCommand):
 
 
     def updateSearchOutput(self, edit, parameters, text):
-        outputRegion = sublime.Region(len(str(parameters)) + 2, self.view.size())
-        self.view.replace(edit, outputRegion, text)
+        showRegion = self.getShowRegion()
+        self.view.replace(edit, showRegion, text)
 
 
     def updateOutput(self, edit, parameters, text):
         if parameters['needContinue']:
             self.appendText(edit, text)
         else:
-            showRegion = sublime.Region(self.showBegin, self.showEnd)
+            showRegion = self.getShowRegion()
             self.view.replace(edit, showRegion, text)
 
 
     def updateParameters(self, edit, parameters, start, end):
-        parameters['appendingBegin'] = start
-        parameters['appendingEnd'] = end
+        parameters['updateBegin'] = start
+        parameters['updateEnd'] = end
         text = self.formartDictStr(str(parameters))
         print(str(parameters))
         print(text)
@@ -124,8 +126,8 @@ class TextCommand(sublime_plugin.TextCommand):
  'searchKey': '',
  'path': '/Users/wingman/GitHub/big_text_reader/xml/small.xml',
  'needContinue': True,
- 'appendingBegin': None,
- 'appendingEnd': None,
+ 'updateBegin': None,
+ 'updateEnd': None,
  'pageSize': 300
 }
 '''
